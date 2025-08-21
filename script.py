@@ -22,7 +22,11 @@ def main():
     erase_tables(cursor)
     create_tables(cursor)
     add_user(cursor, 'tyler')
+    add_user(cursor, 'mailo')
     add_post(cursor, 1, 'First post')
+    add_post(cursor, 2, 'Second post')
+    add_post(cursor, 1, 'Third post')
+    add_post(cursor, 2, 'Fourth post')
     #print_users(cursor)
     
     close_connections(conn, cursor)
@@ -32,6 +36,7 @@ def close_connections(conn, cursor):
     conn.close()
 
 def erase_tables(cursor):
+    cursor.execute("DROP TABLE IF EXISTS comments;")
     cursor.execute("DROP TABLE IF EXISTS posts;")
     cursor.execute("DROP TABLE IF EXISTS users;")
     print("Tables erased")
@@ -40,7 +45,8 @@ def create_tables(cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
-            username VARCHAR(10) UNIQUE NOT NULL CHECK (LENGTH(username) >= 4)
+            username VARCHAR(10) UNIQUE NOT NULL CHECK (LENGTH(username) >= 4),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
     print("'users' created")
@@ -48,14 +54,26 @@ def create_tables(cursor):
         CREATE TABLE IF NOT EXISTS posts (
             id SERIAL PRIMARY KEY,
             user_id INTEGER,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
             content VARCHAR(300) NOT NULL,
             image_url VARCHAR(200),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            INDEX (created_at)
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         );
     """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts (created_at);")
     print("'posts' created")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS comments (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER,
+            post_id INTEGER,
+            content VARCHAR(150) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE SET NULL
+        );
+    """)
+    print("'comments' created")
     
 def print_users(cursor):
     cursor.execute("SELECT * FROM users;")

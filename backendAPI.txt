@@ -1,0 +1,26 @@
+/api
+    /users
+        Get all users
+        GET: {'users': [{id, username, created_at}]}
+    /user
+        /<user_id>
+            GET: {'user: {id, username, created_at}}
+        POST: {username} -> error/msg
+        DELETE?
+    /feed
+        /new
+            GET: {'posts':[{id, content, user_id, created_at, username, image_url}]}    (limit, page)
+        /following
+            GET?
+        /hashtag/<hashtag>
+            GET
+    /post
+        /post_id
+            GET: {'post': {id, content, user_id, created_at, username, image_url}}  
+        POST: {content, user_id} -> error/msg
+        DELETE?
+        EDIT?
+    /comment
+        POST
+    /follow
+        POST
