@@ -6,7 +6,7 @@
         /<user_id>
             GET: {'user: {id, username, created_at}}
         POST: {username} -> error/msg
-        DELETE?
+        DELETE?     (2)
     /feed
         /new
             GET: {'posts':[{id, content, user_id, created_at, username, image_url}]}    (limit, page)
@@ -16,11 +16,11 @@
             GET
     /post
         /post_id
-            GET: {'post': {id, content, user_id, created_at, username, image_url}}  
+            GET: {'post': {id, content, user_id, created_at, username, image_url, comments: []}}  
         POST: {content, user_id} -> error/msg
-        DELETE?
-        EDIT?
+        DELETE?     (3)
+        EDIT?       (4)
     /comment
-        POST
+        POST        (1)
     /follow
         POST

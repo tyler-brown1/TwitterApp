@@ -1,0 +1,19 @@
+users:
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(10) UNIQUE NOT NULL CHECK (LENGTH(username) >= 4),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+posts:
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    content VARCHAR(300) NOT NULL,
+    image_url VARCHAR(200),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+comments:
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    post_id INTEGER,
+    content VARCHAR(150) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE SET NULL
