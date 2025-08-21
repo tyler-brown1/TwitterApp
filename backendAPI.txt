@@ -3,24 +3,26 @@
         Get all users
         GET: {'users': [{id, username, created_at}]}
     /user
+        /<username>
+            GET: {'user: {id, username, created_at}}
         /<user_id>
             GET: {'user: {id, username, created_at}}
+            DELETE: error/msg
         POST: {username} -> error/msg
-        DELETE?     (2)
     /feed
         /new
             GET: {'posts':[{id, content, user_id, created_at, username, image_url}]}    (limit, page)
         /following
-            GET?
+            GET?        (4)
         /hashtag/<hashtag>
             GET
     /post
         /post_id
-            GET: {'post': {id, content, user_id, created_at, username, image_url, comments: []}}  
+            GET: {'post': {id, content, user_id, created_at, username, image_url, comments: []}}    (3)
+            DELETE: error/msg
+            PATCH>      (1)
         POST: {content, user_id} -> error/msg
-        DELETE?     (3)
-        EDIT?       (4)
     /comment
-        POST        (1)
+        POST            (2)
     /follow
         POST
