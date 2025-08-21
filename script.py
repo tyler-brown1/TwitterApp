@@ -22,7 +22,8 @@ def main():
     erase_tables(cursor)
     create_tables(cursor)
     add_user(cursor, 'tyler')
-    print_users(cursor)
+    add_post(cursor, 1, 'First post')
+    #print_users(cursor)
     
     close_connections(conn, cursor)
 
@@ -31,9 +32,10 @@ def close_connections(conn, cursor):
     conn.close()
 
 def erase_tables(cursor):
+    cursor.execute("DROP TABLE IF EXISTS posts;")
     cursor.execute("DROP TABLE IF EXISTS users;")
-    print("'users' dropped")
-    
+    print("Tables erased")
+        
 def create_tables(cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -42,6 +44,18 @@ def create_tables(cursor):
         );
     """)
     print("'users' created")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS posts (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+            content VARCHAR(300) NOT NULL,
+            image_url VARCHAR(200),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            INDEX (created_at)
+        );
+    """)
+    print("'posts' created")
     
 def print_users(cursor):
     cursor.execute("SELECT * FROM users;")
@@ -53,8 +67,17 @@ def add_user(cursor, username):
     cursor.execute("""
         INSERT INTO users (username)
         VALUES (%s)
+        RETURNING id;
     """, (username,))
     print(f"Added user: '{username} ")
+    
+def add_post(cursor, user_id, content):
+    cursor.execute("""
+        INSERT INTO posts (user_id, content)
+        VALUES (%s, %s)
+        RETURNING id;
+    """, (user_id, content))
+    print(f"Created post #{cursor.fetchone()[0]}")
 
 def get_user(cursor, username):
     cursor.execute("""
