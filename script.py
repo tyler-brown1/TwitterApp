@@ -19,8 +19,9 @@ def main():
     conn.autocommit = True
     cursor = conn.cursor()
     
-    #erase_tables(cursor)
-    #create_tables(cursor)
+    erase_tables(cursor)
+    create_tables(cursor)
+    add_user(cursor, 'tyler')
     print_users(cursor)
     
     close_connections(conn, cursor)

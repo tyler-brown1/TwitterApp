@@ -3,7 +3,7 @@ import psycopg2
 
 app = Flask(__name__)
 
-DB_HOST = "localhost"
+DB_HOST = "postgres"
 DB_PORT = "5432"
 DB_USER = "admin"
 DB_PASSWORD = "secret"
@@ -66,6 +66,6 @@ def add_user():
 
 if __name__ == "__main__":
     try:
-        app.run(debug=True)
+        app.run(host="0.0.0.0", port=5001)
     finally:
         conn.close()

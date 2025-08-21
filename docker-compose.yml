@@ -2,7 +2,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16
-    container_name: my-postgres
+    container_name: project-db
     restart: always
     environment:
       POSTGRES_USER: admin
@@ -12,6 +12,15 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+  backend:
+    build: ./backend
+    container_name: project-server
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
 
 volumes:
   postgres_data:
