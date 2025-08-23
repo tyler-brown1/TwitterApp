@@ -23,17 +23,26 @@ def parse_user(obj):
     return {"id": obj[0], "username": obj[1], "created_at": obj[2]}
 
 # Fetching 1 user also includes username
-def parse_post(obj):
-    res = {
+def parse_post(obj, comments=-1):
+    return {
         "id": obj[0], 
         "user_id": obj[1], 
         "content": obj[2], 
         "image_url": obj[3], 
         "created_at": obj[4],
+        'username': obj[5],
+    }
+
+def parse_comment(obj):
+    return {
+        'id': obj[0],
+        'post_id': obj[1],
+        'user_id': obj[2],
+        'content': obj[3],
+        'created_at': obj[4],
         'username': obj[5]
     }
-    return res
-
+    
 # Get all users
 @app.route('/api/users', methods=['GET'])
 def get_users():
@@ -95,6 +104,7 @@ def add_user():
     finally:
         cursor.close()
 
+# Delete user
 @app.route('/api/user/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
     cursor = conn.cursor()
@@ -115,11 +125,20 @@ def get_post(post_id):
         WHERE posts.id = %s
     """, (post_id,))
     res = cursor.fetchone()
-    cursor.close()
     if res is None:
         return jsonify({"error": "User not found"}), 404
-    return jsonify({'post': parse_post(res)}), 200
+    cursor.execute("""
+        SELECT c.id, post_id, c.user_id, content, c.created_at, username
+        FROM comments as c
+        JOIN users on c.user_id = users.id
+        WHERE post_id = %s
+        ORDER BY created_at DESC;
+    """, (post_id,))
+    comments = cursor.fetchall()
+    cursor.close()
+    return jsonify({'post':parse_post(res), 'comments':list(map(parse_comment, comments))}), 200
 
+# Delete post
 @app.route('/api/post/<int:post_id>', methods=['DELETE'])
 def delete_post(post_id):
     cursor = conn.cursor()
@@ -130,8 +149,8 @@ def delete_post(post_id):
     cursor.close()
     return jsonify({"msg": f"Post #{post_id} deleted"}), 200
     
-# Get all posts using pagination
-@app.route('/api/feed/new', methods=['GET'])
+# Get new posts using pagination
+@app.route('/api/posts/new', methods=['GET'])
 def get_new():
     limit = request.args.get('limit', default=10, type=int)
     page = request.args.get('page', default=1, type=int)
@@ -147,12 +166,30 @@ def get_new():
     cursor.close()
     return jsonify({'posts': list(map(parse_post, data))}), 200
 
+# Get posts from user using pagination
+@app.route('/api/posts/user/<int:user_id>', methods=['GET'])
+def get_user_posts(user_id):
+    limit = request.args.get('limit', default=10, type=int)
+    page = request.args.get('page', default=1, type=int)
+    offset = (page - 1) * limit
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT posts.id, user_id, content, image_url, posts.created_at, username FROM posts
+        JOIN users ON posts.user_id = users.id
+        WHERE posts.user_id = %s
+        ORDER BY created_at DESC
+        LiMIT %s OFFSET %s;
+    """, (user_id, limit, offset))
+    data = cursor.fetchall()
+    cursor.close()
+    return jsonify({'posts': list(map(parse_post, data))}), 200
+
 # Add a new post
 @app.route('/api/post', methods=['POST'])
 def add_post():
     if 'content' not in request.json or 'user_id' not in request.json:
         return jsonify({"error": "Missing field"}), 400
-    if not isinstance(request.json['user_id'], int) or request.json['user_id'] <= 0:
+    if not isinstance(request.json['user_id'], int):
         return jsonify({"error": "Invalid user_id"}), 400
     if len(request.json['content']) > 300 or len(request.json['content']) == 0:
         return jsonify({"error": "Content length error"}), 400
@@ -167,6 +204,29 @@ def add_post():
         return jsonify({"msg": f"Post created"})
     except psycopg2.errors.ForeignKeyViolation:
         return jsonify({"error": f"user_id does not exist"}), 400
+    finally:
+        cursor.close()
+
+@app.route('/api/comment', methods=['POST'])
+def comment():
+    if 'content' not in request.json or 'user_id' not in request.json or 'post_id' not in request.json:
+        return jsonify({"error": "Missing field"}), 400
+    if not isinstance(request.json['user_id'], int) or not isinstance(request.json['post_id'], int):
+        return jsonify({"error": "Invalid user_id or post_id"}), 400
+    if len(request.json['content']) > 150 or len(request.json['content']) == 0:
+        return jsonify({"error": "Content length error"}), 400
+    content = request.json['content']
+    user_id = int(request.json['user_id'])
+    post_id = int(request.json['post_id'])
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+        INSERT INTO comments (user_id, post_id, content)
+        VALUES (%s, %s, %s)
+        """, (user_id, post_id, content,))
+        return jsonify({"msg": f"Commented"})
+    except psycopg2.errors.ForeignKeyViolation:
+        return jsonify({"error": f"user_id / post_id does not exist"}), 400
     finally:
         cursor.close()
     

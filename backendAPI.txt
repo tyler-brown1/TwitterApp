@@ -9,20 +9,22 @@
             GET: {'user: {id, username, created_at}}
             DELETE: error/msg
         POST: {username} -> error/msg
-    /feed
+    /posts
         /new
             GET: {'posts':[{id, content, user_id, created_at, username, image_url}]}    (limit, page)
         /following
-            GET?        (4)
+            GET?
         /hashtag/<hashtag>
-            GET
+            GET?
+        /user/<user_id>
+            GET: {'posts':[{id, content, user_id, created_at, username, image_url}]}
     /post
         /post_id
-            GET: {'post': {id, content, user_id, created_at, username, image_url, comments: []}}    (3)
+            GET: {'post': {id, content, user_id, created_at, username, image_url, comments: []}}    (2)
             DELETE: error/msg
-            PATCH>      (1)
+            PATCH?      (3)
         POST: {content, user_id} -> error/msg
     /comment
-        POST            (2)
+        POST            (1)
     /follow
         POST
